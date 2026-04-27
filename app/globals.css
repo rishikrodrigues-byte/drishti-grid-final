@@ -22,3 +22,43 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* =========================================
+   ENTERPRISE VISUAL POLISH (DRISHTI-GRID)
+   ========================================= */
+
+/* 1. Custom Stealth Scrollbars */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #050505; 
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #27272a; 
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #14b8a6; /* Teal hover */
+}
+
+/* 2. AI Scanner HUD Laser Animation */
+@keyframes scanline {
+  0% { top: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+.animate-scanline {
+  animation: scanline 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* 3. Smooth Pulse for Live Indicators */
+@keyframes softPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.animate-soft-pulse {
+  animation: softPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
