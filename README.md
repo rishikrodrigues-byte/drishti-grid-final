@@ -1,36 +1,19 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 👁️ DRISHTI-GRID 2.0
+**Autonomous Road Health Digital Twin & Contractor Accountability Platform**
 
-## Getting Started
+Built for the **Google Solution Challenge 2026** to target UN SDGs 9.1, 11.2, 12.5, and 16.
 
-First, run the development server:
+### 🚀 The Innovation
+Municipalities lose millions to reactive road maintenance and contractor "ghost fixes." DRISHTI-GRID solves this by repurposing discarded smartphones (E-waste) into zero-cost Edge-AI sensors mounted on municipal garbage trucks. 
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### 🧠 Powered by Google Gemini 3 Flash
+We utilize **Google Gemini 3 Flash Preview** via REST API as a Multimodal Civil Engineer:
+- **3D Monocular Depth Estimation:** Calculates the exact volumetric Bitumen Payload (KG) required, mathematically capping contractor billing to prevent material fraud.
+- **Smart Dispatch Engine:** Clusters work orders by jurisdiction, enforces Contractor SLAs, and uses a Live Weather Engine to automatically block "Hot-Mix" asphalt dispatch during monsoons.
+- **Closed-Loop AI Verification:** Contractors are only paid when the Edge Node re-drives the coordinate and Gemini visually verifies the road is smooth, committing it to an immutable ledger.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 🛠️ Tech Stack
+- **AI Brain:** Google Gemini 3 Flash Preview (Vision)
+- **Frontend/Edge Node:** Next.js (PWA), TypeScript, Tailwind CSS
+- **Sensors:** HTML5 DeviceMotion API & Geolocation API
+- **Cloud State:** Google Firebase Firestore
