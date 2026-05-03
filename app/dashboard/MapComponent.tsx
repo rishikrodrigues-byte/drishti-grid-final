@@ -1,17 +1,28 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect } from "react";
 
+// STRICT TYPESCRIPT INTERFACE TO FIX 'ANY' ERROR
+interface MapReport {
+  id: string;
+  lat: number;
+  lng: number;
+  type: string;
+  image: string;
+  timestamp?: { seconds: number };
+}
+
 // Red icon to match the destination pin style in your screenshot 
 // and to clearly indicate a "defect" on a light map.
 const DefectIcon = L.icon({
   iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
-  iconSize: [25, 41],
+  iconSize:[25, 41],
   iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
+  popupAnchor:[1, -34],
   shadowSize: [41, 41]
 });
 
@@ -23,7 +34,7 @@ function MapController({ focusedCoords }: { focusedCoords: [number, number] | nu
   return null;
 }
 
-export default function MapComponent({ reports, focusedCoords }: { reports: any[], focusedCoords: [number, number] | null }) {
+export default function MapComponent({ reports, focusedCoords }: { reports: MapReport[], focusedCoords: [number, number] | null }) {
   // Sort by timestamp to draw the path line sequentially
   const pathPositions: [number, number][] = [...reports]
     .sort((a, b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0))
