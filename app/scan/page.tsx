@@ -16,7 +16,7 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
 export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const[logs, setLogs] = useState<string[]>([]);
+  const [logs, setLogs] = useState<string[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [aiStatus, setAiStatus] = useState<"STANDBY" | "ANALYZING" | "VERIFIED" | "ALERT">("STANDBY");
   const scannedZones = useRef<{lat: number, lng: number}[]>([]);
@@ -37,7 +37,8 @@ export default function ScanPage() {
     const lat = pos.coords.latitude;
     const lng = pos.coords.longitude;
 
-    if (!isConfirmation) {
+    // DEMO FIX: Allow Manual button to bypass the 1-meter GPS cache!
+    if (!isConfirmation && type !== "MANUAL_OVERRIDE") {
       for (const zone of scannedZones.current) {
         if (getDistanceInMeters(lat, lng, zone.lat, zone.lng) < 1) {
           return; 
@@ -53,7 +54,13 @@ export default function ScanPage() {
 
     try {
       const diag = await analyzeRoadImage(base64);
-      if (diag.type === "error") { setAiStatus("STANDBY"); return; }
+      
+      // 🚨 CRITICAL FIX: If API fails, print the error to the screen so it doesn't fail silently!
+      if (diag.type === "error") { 
+        addLog(`❌ AI Error: ${diag.repair_action || "API Limit Exceeded"}`);
+        setAiStatus("STANDBY"); 
+        return; 
+      }
 
       const q = query(collection(db, "reports"));
       const snap = await getDocs(q);
@@ -73,18 +80,11 @@ export default function ScanPage() {
 
       if (nearbyResolvedId) {
         if (diag.type === "normal") {
-          await updateDoc(doc(db, "reports", nearbyResolvedId), { 
-            status: "VERIFIED", 
-            verifiedAt: serverTimestamp(),
-            after_image: base64 
-          });
+          await updateDoc(doc(db, "reports", nearbyResolvedId), { status: "VERIFIED", verifiedAt: serverTimestamp(), after_image: base64 });
           addLog("🛡️ FIX VERIFIED! Ledger updated.");
           setAiStatus("VERIFIED");
         } else {
-          await updateDoc(doc(db, "reports", nearbyResolvedId), { 
-            status: "OPEN", 
-            failed_verification: true 
-          });
+          await updateDoc(doc(db, "reports", nearbyResolvedId), { status: "OPEN", failed_verification: true });
           addLog("🚨 FAKE FIX REJECTED! Sent back to queue.");
           setAiStatus("ALERT");
         }
@@ -93,7 +93,8 @@ export default function ScanPage() {
       }
 
       if (diag.type !== "normal") {
-        if (duplicateOpenId) {
+        // Only block duplicate open tickets if it's NOT a manual override
+        if (duplicateOpenId && type !== "MANUAL_OVERRIDE") {
            setAiStatus("STANDBY");
            return; 
         }
@@ -114,8 +115,7 @@ export default function ScanPage() {
       }
 
     } catch { 
-      // Removed the unused 'error' variable here
-      addLog("❌ Sync Error"); 
+      addLog("❌ Database Sync Error"); 
       setAiStatus("STANDBY"); 
     }
   },[]);
@@ -127,7 +127,6 @@ export default function ScanPage() {
       setIsScanning(true);
       addLog("🚀 M12 Optics Engine Online");
     } catch { 
-      // Removed the unused 'err' variable here
       addLog("❌ Camera Denied"); 
     }
   };
@@ -146,7 +145,6 @@ export default function ScanPage() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-zinc-300 p-6 font-mono flex flex-col relative overflow-hidden">
-      
       <div className="flex justify-between items-center mb-6 z-10">
         <div>
           <h1 className="text-teal-500 font-bold uppercase tracking-widest text-sm flex items-center gap-2"><Cpu size={16}/> DRISHTI-GRID EDGE</h1>
@@ -162,16 +160,13 @@ export default function ScanPage() {
 
       <div className="relative w-full rounded-xl border border-zinc-800 mb-6 aspect-[4/3] bg-black overflow-hidden shadow-2xl">
         <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover opacity-90" />
-        
         {isScanning && (
           <>
             <div className="absolute w-full h-1 bg-teal-500/80 shadow-[0_0_20px_rgba(20,184,166,1)] animate-scanline z-10" />
-            
             <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-teal-500/50" />
             <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-teal-500/50" />
             <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-teal-500/50" />
             <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-teal-500/50" />
-            
             <div className="absolute bottom-4 left-0 right-0 flex justify-center z-20">
                <div className={`px-4 py-1.5 rounded backdrop-blur-md text-[10px] uppercase tracking-widest font-bold flex items-center gap-2 transition-all ${
                  aiStatus === "ANALYZING" ? "bg-amber-500/20 text-amber-400 border border-amber-500/50" :
@@ -206,7 +201,12 @@ export default function ScanPage() {
       {!isScanning ? (
         <button onClick={initCamera} className="w-full mt-6 bg-teal-600 hover:bg-teal-500 transition-all py-4 rounded-xl font-bold uppercase tracking-widest text-xs text-white shadow-lg shadow-teal-900/20 z-10 relative">Initialize Sensor Array</button>
       ) : (
-        <button onClick={() => runTrigger("MANUAL_OVERRIDE")} className="w-full mt-6 bg-zinc-900 hover:bg-amber-600 hover:text-white transition-all border border-zinc-800 hover:border-amber-500 py-4 rounded-xl font-bold uppercase tracking-widest text-xs text-zinc-400 z-10 relative">Manual Capture Override</button>
+        <button 
+          onClick={() => runTrigger("MANUAL_OVERRIDE")} 
+          disabled={aiStatus === "ANALYZING"} // 🚨 THIS LOCKS THE BUTTON SO YOU CANT SPAM GOOGLE'S API!
+          className="w-full mt-6 bg-zinc-900 disabled:opacity-50 hover:bg-amber-600 hover:text-white transition-all border border-zinc-800 hover:border-amber-500 py-4 rounded-xl font-bold uppercase tracking-widest text-xs text-zinc-400 z-10 relative">
+          {aiStatus === "ANALYZING" ? "Processing..." : "Manual Capture Override"}
+        </button>
       )}
     </div>
   );
