@@ -1,7 +1,12 @@
 export async function analyzeRoadImage(base64Data: string) {
   const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+  
+  // We use the direct REST API for Gemini 3 Flash instead of the heavy SDK.
+  // This keeps the mobile edge node blazing fast and prevents library version conflicts.
   const URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`;
 
+  // Here is the magic. We prompt the AI to act as a civil engineer, 
+  // forcing it to use visual context to estimate 3D depth and do the actual asphalt math.
   const promptText = `You are an expert Civil Engineering AI for the PWD. Analyze this road image.
 If the road is normal, return exactly: {"type":"normal", "severity":0, "repair_action":"None", "bitumen_kg":0, "hazard":false}
 
@@ -44,9 +49,7 @@ Return ONLY a raw JSON object with this exact structure (no markdown, no backtic
   try {
     const res = await fetch(URL, {
       method: "POST",
-      headers: { 
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
     });
 
@@ -62,17 +65,18 @@ Return ONLY a raw JSON object with this exact structure (no markdown, no backtic
 
     const rawText = data.candidates[0].content.parts[0].text;
     
-    // Fault-Tolerant Parsing: Employs regex extraction to isolate the strict JSON payload 
+    // LLMs sometimes like to chat or wrap JSON in markdown blockticks (```json).
+    // This regex safely rips out just the raw JSON object so our app doesn't crash.
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("No JSON payload detected in response stream.");
+    if (!jsonMatch) throw new Error("No JSON payload found in AI response.");
     
     return JSON.parse(jsonMatch[0]);
-    
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Internal AI Error";
-    console.error("TELEMETRY_SYNC_FAILURE:", errorMessage);
+    console.error("AI Analysis Failed:", errorMessage);
     
-    // Failsafe Mechanism: Returns an error state to the Edge Node 
+    // If the AI fails (bad connection, blurry photo), we return an "error" type.
+    // The mobile app checks for this and simply ignores the frame instead of saving junk to the database.
     return { 
       type: "error", 
       severity: 0, 
