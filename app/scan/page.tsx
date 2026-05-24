@@ -16,7 +16,7 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
 export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const[logs, setLogs] = useState<string[]>([]);
+  const [logs, setLogs] = useState<string[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [aiStatus, setAiStatus] = useState<"STANDBY" | "ANALYZING" | "VERIFIED" | "ALERT">("STANDBY");
   const scannedZones = useRef<{lat: number, lng: number}[]>([]);
@@ -37,10 +37,11 @@ export default function ScanPage() {
     const lat = pos.coords.latitude;
     const lng = pos.coords.longitude;
 
-    if (!isConfirmation) {
+    // DEMO FIX: Allow the Manual button to bypass the 1-meter GPS cache!
+    if (!isConfirmation && type !== "MANUAL_OVERRIDE") {
       for (const zone of scannedZones.current) {
         if (getDistanceInMeters(lat, lng, zone.lat, zone.lng) < 1) {
-          return; 
+          return; // Silently ignore background scans if we haven't moved
         }
       }
     }
@@ -93,7 +94,8 @@ export default function ScanPage() {
       }
 
       if (diag.type !== "normal") {
-        if (duplicateOpenId) {
+        // Only block duplicate open tickets if it's NOT a manual override
+        if (duplicateOpenId && type !== "MANUAL_OVERRIDE") {
            setAiStatus("STANDBY");
            return; 
         }
