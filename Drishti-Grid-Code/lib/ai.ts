@@ -1,15 +1,10 @@
 export async function analyzeRoadImage(base64Data: string) {
   const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
   
-  // 🔒 ENTERPRISE SECURITY: Confidential Computing Environment (TEE)
-  // We simulate routing this request through Google Cloud Confidential Space.
-  // This ensures images containing PII (Faces/License Plates) are encrypted IN USE.
-  // The Gemini model processes the data inside an isolated hardware enclave and destroys it.
-  console.log("🔒 [CLOUD TEE] Establishing Confidential Space connection for Gemini inference...");
-
+  // THE 2026 FREE-TIER FIX: Using the guaranteed Gemini 3 Flash Preview model
   const URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`;
 
-  // Core System Prompt: Engineering civil-physics constraints and Monocular Depth Estimation logic.
+  // NEW ADVANCED 3D VOLUME ESTIMATION PROMPT
   const promptText = `You are an expert Civil Engineering AI for the PWD. Analyze this road image.
 If the road is normal, return exactly: {"type":"normal", "severity":0, "repair_action":"None", "bitumen_kg":0, "hazard":false}
 
@@ -52,11 +47,7 @@ Return ONLY a raw JSON object with this exact structure (no markdown, no backtic
   try {
     const res = await fetch(URL, {
       method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        // Simulated Confidential Compute Header
-        "X-Confidential-Compute-Attestation": "true" 
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
     });
 
@@ -72,18 +63,16 @@ Return ONLY a raw JSON object with this exact structure (no markdown, no backtic
 
     const rawText = data.candidates[0].content.parts[0].text;
     
-    // Fault-Tolerant Parsing: Employs regex extraction to isolate the strict JSON payload 
+    // SURGICAL EXTRACTION: Rips JSON out of any text Gemini might add
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("No JSON payload detected in response stream.");
+    if (!jsonMatch) throw new Error("No JSON found");
     
-    console.log("🔒 [CLOUD TEE] Inference complete. Ephemeral memory wiped.");
     return JSON.parse(jsonMatch[0]);
-    
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Internal AI Error";
-    console.error("TELEMETRY_SYNC_FAILURE:", errorMessage);
+    console.error("BRAIN_FAIL:", errorMessage);
     
-    // Failsafe Mechanism: Returns an error state to the Edge Node 
+    // We return type: "error" so the Edge Node knows NOT to save this to Firestore
     return { 
       type: "error", 
       severity: 0, 

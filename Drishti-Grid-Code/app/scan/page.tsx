@@ -1,10 +1,9 @@
-
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, query, getDocs, updateDoc, doc } from "firebase/firestore";
 import { analyzeRoadImage } from "@/lib/ai";
-import { ShieldAlert, Activity, CheckCircle2, Cpu, Lock } from "lucide-react";
+import { ShieldAlert, Activity, CheckCircle2, Cpu } from "lucide-react";
 
 function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371e3;
@@ -12,14 +11,6 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
   const dp = (lat2-lat1) * Math.PI/180, dl = (lon2-lon1) * Math.PI/180;
   const a = Math.sin(dp/2) * Math.sin(dp/2) + Math.cos(p1) * Math.cos(p2) * Math.sin(dl/2) * Math.sin(dl/2);
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
-
-// 🔒 TEE SIMULATION: Generates a SHA-256 cryptographic signature
-async function generateTEESignature(payload: string) {
-  const msgBuffer = new TextEncoder().encode(payload);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 export default function ScanPage() {
@@ -38,7 +29,10 @@ export default function ScanPage() {
     let pos: GeolocationPosition;
     try {
       pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true }));
-    } catch { addLog("❌ GPS Lock Pending..."); return; }
+    } catch { 
+      addLog("❌ GPS Lock Pending..."); 
+      return; 
+    }
 
     const lat = pos.coords.latitude;
     const lng = pos.coords.longitude;
@@ -56,11 +50,6 @@ export default function ScanPage() {
     const ctx = canvasRef.current.getContext("2d");
     ctx?.drawImage(videoRef.current, 0, 0, 640, 480);
     const base64 = canvasRef.current.toDataURL("image/jpeg", 0.5);
-
-    // 🔒 GENERATE TEE SIGNATURE BEFORE CLOUD SYNC
-    const rawDataToSign = `${lat}_${lng}_${Date.now()}_${base64.substring(0, 50)}`;
-    const teeSignature = await generateTEESignature(rawDataToSign);
-    addLog(`🔒 [TEE ENCLAVE] Signed: ${teeSignature.substring(0, 12)}...`);
 
     try {
       const diag = await analyzeRoadImage(base64);
@@ -87,8 +76,7 @@ export default function ScanPage() {
           await updateDoc(doc(db, "reports", nearbyResolvedId), { 
             status: "VERIFIED", 
             verifiedAt: serverTimestamp(),
-            after_image: base64,
-            tee_signature: teeSignature // Save crypto proof to DB
+            after_image: base64 
           });
           addLog("🛡️ FIX VERIFIED! Ledger updated.");
           setAiStatus("VERIFIED");
@@ -114,15 +102,7 @@ export default function ScanPage() {
         setAiStatus("ALERT");
         scannedZones.current.push({ lat, lng });
         await addDoc(collection(db, "reports"), { 
-          ...diag, 
-          image: base64, 
-          lat, 
-          lng, 
-          trigger: type, 
-          timestamp: serverTimestamp(), 
-          status: "OPEN", 
-          failed_verification: false,
-          tee_signature: teeSignature // Save crypto proof to DB
+          ...diag, image: base64, lat, lng, trigger: type, timestamp: serverTimestamp(), status: "OPEN", failed_verification: false
         });
         
         if (diag.severity >= 3 && !isConfirmation) {
@@ -134,6 +114,7 @@ export default function ScanPage() {
       }
 
     } catch { 
+      // Removed the unused 'error' variable here
       addLog("❌ Sync Error"); 
       setAiStatus("STANDBY"); 
     }
@@ -146,6 +127,7 @@ export default function ScanPage() {
       setIsScanning(true);
       addLog("🚀 M12 Optics Engine Online");
     } catch { 
+      // Removed the unused 'err' variable here
       addLog("❌ Camera Denied"); 
     }
   };
@@ -168,7 +150,7 @@ export default function ScanPage() {
       <div className="flex justify-between items-center mb-6 z-10">
         <div>
           <h1 className="text-teal-500 font-bold uppercase tracking-widest text-sm flex items-center gap-2"><Cpu size={16}/> DRISHTI-GRID EDGE</h1>
-          <p className="text-[9px] text-zinc-500 uppercase mt-1 tracking-[0.2em] flex items-center gap-1"><Lock size={8}/> Hardware TEE Secure</p>
+          <p className="text-[9px] text-zinc-500 uppercase mt-1 tracking-[0.2em]">Vehicle ID: TRK-094 • Samsung M12</p>
         </div>
         {isScanning && (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-green-900/30 bg-green-950/20">
