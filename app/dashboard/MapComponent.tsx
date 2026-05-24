@@ -5,24 +5,23 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect } from "react";
 
-// STRICT TYPESCRIPT INTERFACE TO FIX 'ANY' ERROR
+// STRICT TYPESCRIPT INTERFACE (Perfectly typed to prevent the 'any' warning)
 interface MapReport {
   id: string;
   lat: number;
   lng: number;
   type: string;
   image: string;
-  timestamp?: { seconds: number };
+  timestamp?: { seconds: number } | null; // <--- Clean fix for ESLint and Vercel!
 }
 
-// Red icon to match the destination pin style in your screenshot 
-// and to clearly indicate a "defect" on a light map.
+// Red icon to match the destination pin style
 const DefectIcon = L.icon({
   iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
-  iconSize:[25, 41],
+  iconSize: [25, 41],
   iconAnchor: [12, 41],
-  popupAnchor:[1, -34],
+  popupAnchor: [1, -34],
   shadowSize: [41, 41]
 });
 
@@ -43,18 +42,18 @@ export default function MapComponent({ reports, focusedCoords }: { reports: MapR
   return (
     <MapContainer center={[13.0515, 74.9647]} zoom={13} className="h-full w-full bg-white">
       
-      {/* 1. LIGHT THEME GOOGLE MAPS TILES (Matches your screenshot perfectly) */}
+      {/* 1. LIGHT THEME GOOGLE MAPS TILES */}
       <TileLayer 
         url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}" 
         attribution='&copy; Google Maps'
       />
       
-      {/* 2. THICK NEON GREEN SOLID LINE (Matches the routing line in your screenshot) */}
+      {/* 2. THICK NEON GREEN SOLID LINE */}
       <Polyline 
         positions={pathPositions} 
-        color="#39FF14" // Bright neon green
-        weight={6}      // Thick line
-        opacity={0.8}   // Solid appearance
+        color="#39FF14"
+        weight={6}      
+        opacity={0.8}   
       />
       
       <MapController focusedCoords={focusedCoords} />
