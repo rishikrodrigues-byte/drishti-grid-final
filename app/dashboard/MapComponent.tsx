@@ -4,16 +4,16 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect } from "react";
+import { Timestamp } from "firebase/firestore"; // <--- ADDED THIS IMPORT
 
-// BULLETPROOF INTERFACE (Bypasses Vercel strict checking)
+// PERFECT TYPESCRIPT INTERFACE (Matches page.tsx exactly)
 interface MapReport {
   id: string;
   lat: number;
   lng: number;
   type: string;
   image: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  timestamp?: any;
+  timestamp: Timestamp | null; // <--- THIS WILL PASS VERCEL & ESLINT
 }
 
 // Red icon to match the destination pin style
