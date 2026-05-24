@@ -1,15 +1,7 @@
 export async function analyzeRoadImage(base64Data: string) {
   const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-  
-  // 🔒 ENTERPRISE SECURITY: Confidential Computing Environment (TEE)
-  // We simulate routing this request through Google Cloud Confidential Space.
-  // This ensures images containing PII (Faces/License Plates) are encrypted IN USE.
-  // The Gemini model processes the data inside an isolated hardware enclave and destroys it.
-  console.log("🔒 [CLOUD TEE] Establishing Confidential Space connection for Gemini inference...");
-
   const URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${API_KEY}`;
 
-  // Core System Prompt: Engineering civil-physics constraints and Monocular Depth Estimation logic.
   const promptText = `You are an expert Civil Engineering AI for the PWD. Analyze this road image.
 If the road is normal, return exactly: {"type":"normal", "severity":0, "repair_action":"None", "bitumen_kg":0, "hazard":false}
 
@@ -53,9 +45,7 @@ Return ONLY a raw JSON object with this exact structure (no markdown, no backtic
     const res = await fetch(URL, {
       method: "POST",
       headers: { 
-        "Content-Type": "application/json",
-        // Simulated Confidential Compute Header
-        "X-Confidential-Compute-Attestation": "true" 
+        "Content-Type": "application/json"
       },
       body: JSON.stringify(body)
     });
@@ -76,7 +66,6 @@ Return ONLY a raw JSON object with this exact structure (no markdown, no backtic
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("No JSON payload detected in response stream.");
     
-    console.log("🔒 [CLOUD TEE] Inference complete. Ephemeral memory wiped.");
     return JSON.parse(jsonMatch[0]);
     
   } catch (error: unknown) {
