@@ -1,7 +1,7 @@
 # 👁️ DRISHTI-GRID 2.0
 **Autonomous Road Health Digital Twin & Contractor Accountability Platform**
 
-Built for the **Google Solution Challenge 2026** to target UN SDGs 9.1, 11.2, 12.5, and 16.
+Built to target UN SDGs 9.1, 11.2, 12.5, and 16.
 
 ### 🚀 The Innovation
 Municipalities lose millions to reactive road maintenance and contractor "ghost fixes." DRISHTI-GRID solves this by repurposing discarded smartphones (E-waste) into zero-cost Edge-AI sensors mounted on municipal garbage trucks. 
